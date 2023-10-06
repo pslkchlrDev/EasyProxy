@@ -2,15 +2,26 @@
 # ===== Easy Proxy ===========================================
 # = System wide proxy settings in Ubuntu / Debian.
 # ===== Version: =============================================
-# = 0.2.231004
+# = 1.0.231006
 # ======Configuration: =======================================
-PROXY_HOST="localhost"
-PROXY_PORT="8080"
 APT_PROXY="/etc/apt/apt.conf"
 APT2_PROXY="/etc/apt/apt.conf.d/proxy.conf"
 WGET_PROXY="/etc/wgetrc"
+RED="\e[1;31m"
+GREEN="\e[1;32m"
+STYLEEND="\e[0m"
+TITLE="Easy Proxy Setup"
+DESC="System wide proxy settings in Ubuntu / Debian."
 # ============================================================
 SET_PROXY() {
+   echo "$TITLE"
+   echo "Please enter your Proxy Address and Proxy Port"   
+   echo ""
+	echo -n "Proxy Address: "
+	read PROXY_HOST 
+	echo -n "Proxy Port: " 
+	read PROXY_PORT 
+   echo ""
 	gsettings set org.gnome.system.proxy mode 'manual'
 	gsettings set org.gnome.system.proxy.http host "$PROXY_HOST"
 	gsettings set org.gnome.system.proxy.http port "$PROXY_PORT"
@@ -31,7 +42,7 @@ SET_PROXY() {
 	export no_proxy="localhost,127.0.0.1,localaddress,.localdomain.com;"
 
    echo " "
-   echo "Write data in $APT_PROXY..."
+   echo -e "${GREEN}Write data in $APT_PROXY...${STYLEEND}"
 	cat <<-EOF| sudo tee $APT_PROXY
 	Acquire::http::proxy "http://$PROXY_HOST:$PROXY_PORT/";
 	Acquire::https::proxy "https://$PROXY_HOST:$PROXY_PORT/";
@@ -40,7 +51,7 @@ SET_PROXY() {
 	EOF
 
    echo " "
-   echo "Write data in $APT2_PROXY..."
+   echo -e "${GREEN}Write data in $APT2_PROXY...${STYLEEND}"
 	cat <<-EOF| sudo tee $APT2_PROXY
 	Acquire::http::proxy "http://$PROXY_HOST:$PROXY_PORT/";
 	Acquire::https::proxy "https://$PROXY_HOST:$PROXY_PORT/";
@@ -49,7 +60,7 @@ SET_PROXY() {
 	EOF
 
    echo " "
-   echo "Write data in $WGET_PROXY..."
+   echo -e "${GREEN}Write data in $WGET_PROXY...${STYLEEND}"
 	cat <<-EOF| sudo tee $WGET_PROXY
 	use_proxy = on
 	http_proxy = http://$PROXY_HOST:$PROXY_PORT/
@@ -58,34 +69,68 @@ SET_PROXY() {
 	EOF
 
    echo ""
-   echo "Linux Proxy successfully installed! You can now Press Enter to exit"
+   echo -e "${GREEN}Linux Proxy successfully installed!${STYLEEND}"
+   echo -e "${GREEN}You can now Press Enter to exit${STYLEEND}"   
+read
+clear
+}
+
+REM_PROXY() {
+	unset HTTP_PROXY
+	unset HTTPS_PROXY
+	unset FTP_PROXY
+	unset SOCKS_PROXY
+	unset NO_PROXY
+	unset http_proxy
+	unset https_proxy
+	unset ftp_proxy
+	unset socks_proxy
+	unset no_proxy
+	gsettings set org.gnome.system.proxy.http host ''
+	gsettings set org.gnome.system.proxy.http port 0
+	gsettings set org.gnome.system.proxy.https host ''
+	gsettings set org.gnome.system.proxy.https port 0
+	gsettings set org.gnome.system.proxy.ftp host ''
+	gsettings set org.gnome.system.proxy.ftp port 0
+	gsettings reset org.gnome.system.proxy ignore-hosts
+	gsettings set org.gnome.system.proxy mode 'none'
+	gsettings list-recursively org.gnome.system.proxy
+	echo -n ""|sudo tee $APT_PROXY
+	echo -n ""|sudo tee $APT2_PROXY
+	echo -n ""|sudo tee $WGET_PROXY
+   echo ""
+   echo -e "${GREEN}Linux Proxy successfully removed!${STYLEEND}"
+   echo -e "${GREEN}You can now Press Enter to exit${STYLEEND}"   
+
 read
 clear
 }
 
 MENU_ERROR() {
-   echo " ERROR! Incorrect selection!"
+   echo ""
+   echo -e "${RED}ERROR!${STYLEEND}"
+   echo -e "${RED}Wrong selection!${STYLEEND}"   
+
 read
 clear
 }
 
 until [ "$SELECT" = "0" ]; do
 clear
-   echo "# == Main Menu: Proxy Setup "
+   echo "# == $TITLE"
+   echo "# == $DESC"
+   echo "# ============================================================"
 	echo "  1. Install Proxy" 
-	echo "  2. Quit!"
+	echo "  2. Remove Proxy"
+	echo "  3. Quit!"
 	echo ""
 	echo -n "  Enter selection: "
 read SELECT
 
 case $SELECT in
 	1 ) clear ; SET_PROXY ;;
-	2 ) clear ; exit ;;
+	2 ) clear ; REM_PROXY ;;
+	3 ) clear ; exit ;;
 	* ) clear ; MENU_ERROR ;;
    esac
 done
-	ftp_proxy = ftp://$PROXY_HOST:$PROXY_PORT/
-	EOF
-
-echo ""
-echo "Proxy Settings successfully updated"
